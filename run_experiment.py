@@ -65,8 +65,11 @@ def main():
     n = len(image_files)
 
     instruction = "Please estimate the size of the cat in the image as a percentage of the whole image. " \
-                      "For instance, if you think the object occupies half the image, enter '50'. " \
-                      "Please provide your estimate to the nearest whole number. Press 'Enter' to run the experiment"
+                  "For instance, if you think the object occupies half the image, enter '50'. " \
+                  "Please provide your estimate to the nearest whole number. Press 'Enter' to run the experiment. There are two types of " \
+                  "assistance tool you can use to help you with the estimation. Use option --assistance-tool or -at to choose the tool you " \
+                  "want to use. If you choose 'grid', you can see grids on the image that split the image into 5% patches." \
+                  "If you choose 'circle' you will see 5 circles on the image representing the 1%, 5%, 10%, 20%, and 50% area of the image."
 
     # Display a prompt above the image
     prompt = visual.TextStim(win=mywin, text=instruction, pos=(0, 0), height=30, wrapWidth=1000, color='white')
@@ -146,7 +149,7 @@ def main():
             time_display.draw()
             input_text.draw()
             num_img_text.draw()
-            if args.assistance_tool == "gird":
+            if args.assistance_tool == "grid":
                 assistance_tool_grid(mywin, stimulus, row=4, col=5)
             elif args.assistance_tool == "circle":
                 assistance_tool_circle(mywin, stimulus)
@@ -178,13 +181,13 @@ def assistance_tool_grid(mywin, stimulus, row, col):
     # Horizontal lines
     for i in range(row + 1):
         y_pos = i * dy - (image_height / 2)  # Adjusting position relative to the center of the image
-        line = visual.Line(mywin, start=(-image_width / 2, y_pos), end=(image_width / 2, y_pos), lineColor='white')
+        line = visual.Line(mywin, start=(-image_width / 2, y_pos), end=(image_width / 2, y_pos), lineColor='red')
         line.draw()
 
     # Vertical lines
     for i in range(col + 1):
         x_pos = i * dx - (image_width / 2)  # Adjusting position relative to the center of the image
-        line = visual.Line(mywin, start=(x_pos, -image_height / 2), end=(x_pos, image_height / 2), lineColor='white')
+        line = visual.Line(mywin, start=(x_pos, -image_height / 2), end=(x_pos, image_height / 2), lineColor='red')
         line.draw()
 
 
@@ -203,11 +206,11 @@ def assistance_tool_circle(mywin, stimulus):
     redius_20 = compute_redius(image_size, 0.20)
     redius_50 = compute_redius(image_size, 0.50)
 
-    circle1 = visual.Circle(mywin, radius=redius_1, fillColor=None, lineColor='white', pos=(0, 0))
-    circle5 = visual.Circle(mywin, radius=redius_5, fillColor=None, lineColor='white', pos=(0, 0))
-    circle10 = visual.Circle(mywin, radius=redius_10, fillColor=None, lineColor='white', pos=(0, 0))
-    circle20 = visual.Circle(mywin, radius=redius_20, fillColor=None, lineColor='white', pos=(0, 0))
-    circle50 = visual.Circle(mywin, radius=redius_50, fillColor=None, lineColor='white', pos=(0, 0))
+    circle1 = visual.Circle(mywin, radius=redius_1, fillColor=None, lineColor='red', pos=(0, 0))
+    circle5 = visual.Circle(mywin, radius=redius_5, fillColor=None, lineColor='red', pos=(0, 0))
+    circle10 = visual.Circle(mywin, radius=redius_10, fillColor=None, lineColor='red', pos=(0, 0))
+    circle20 = visual.Circle(mywin, radius=redius_20, fillColor=None, lineColor='red', pos=(0, 0))
+    circle50 = visual.Circle(mywin, radius=redius_50, fillColor=None, lineColor='red', pos=(0, 0))
 
     circle1.draw()
     circle5.draw()
