@@ -1,3 +1,5 @@
+import math
+
 from PIL import Image
 from psychopy import visual, core, event
 import os
@@ -8,6 +10,8 @@ import argparse
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
 parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1600,1200", default="1600,1200")
+parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid or circle", default="grid",
+                    choices=["grid", "circle"], required=True)
 args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
@@ -15,6 +19,8 @@ DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
 
 def main():
     # Setup the Window
+    assert "," in args.window_size and len(args.window_size.split(",")) == 2 and all([s.isdigit() for s in args.window_size.split(",")]), \
+        "window size argument must be two positive integers separated by ',' representing the display window size."
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
 
     # Check for saved state
@@ -140,7 +146,12 @@ def main():
             time_display.draw()
             input_text.draw()
             num_img_text.draw()
-            assistance_tool_grid(mywin, stimulus, row=4, col=5)
+            if args.assistance_tool == "gird":
+                assistance_tool_grid(mywin, stimulus, row=4, col=5)
+            elif args.assistance_tool == "circle":
+                assistance_tool_circle(mywin, stimulus)
+            else:
+                raise NotImplementedError
             mywin.flip()
 
 
@@ -177,6 +188,32 @@ def assistance_tool_grid(mywin, stimulus, row, col):
         line.draw()
 
 
+def assistance_tool_circle(mywin, stimulus):
+    # Draw circles over the image which are 1%, 5%, and 10% of the image size
+    image_width = stimulus.size[0]  # width of the image in pixels
+    image_height = stimulus.size[1]  # height of the image in pixels
+    image_size = image_width * image_height
+
+    def compute_redius(size, percentage):
+        return math.sqrt(size * percentage / math.pi)
+
+    redius_1 = compute_redius(image_size, 0.01)
+    redius_5 = compute_redius(image_size, 0.05)
+    redius_10 = compute_redius(image_size, 0.10)
+    redius_20 = compute_redius(image_size, 0.20)
+    redius_50 = compute_redius(image_size, 0.50)
+
+    circle1 = visual.Circle(mywin, radius=redius_1, fillColor=None, lineColor='white', pos=(0, 0))
+    circle5 = visual.Circle(mywin, radius=redius_5, fillColor=None, lineColor='white', pos=(0, 0))
+    circle10 = visual.Circle(mywin, radius=redius_10, fillColor=None, lineColor='white', pos=(0, 0))
+    circle20 = visual.Circle(mywin, radius=redius_20, fillColor=None, lineColor='white', pos=(0, 0))
+    circle50 = visual.Circle(mywin, radius=redius_50, fillColor=None, lineColor='white', pos=(0, 0))
+
+    circle1.draw()
+    circle5.draw()
+    circle10.draw()
+    circle20.draw()
+    circle50.draw()
 
 
 if __name__ == "__main__":
