@@ -7,6 +7,7 @@ import csv
 import json
 import argparse
 import numpy as np
+from instructions import *
 
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
@@ -16,7 +17,9 @@ parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assi
 args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
-Cat = 8
+CAT = 8
+NEW_IMG_WIDTH = 800
+
 
 def main():
     # Setup the Window
@@ -24,6 +27,112 @@ def main():
         "window size argument must be two positive integers separated by ',' representing the display window size."
 
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
+
+    # Specify your image directory
+    base_dir = DATASET_PATH
+    dataset_dir = "VOCdevkit/VOC2012/"
+    image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages/")
+    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug/")
+    cat_file = os.path.join("cat.txt")
+    image_files = []
+    gt_files = []
+
+    with open(cat_file, 'r') as f:
+        for line in f.readlines():
+            file = line.strip()
+            image_files.append(os.path.join(image_dir, file))
+            filename = file.split(".")[0]
+            gt_files.append(os.path.join(gt_dir, filename + ".png"))
+
+    n = len(image_files)
+
+    ob_training_image_files = []
+    ob_training_gt_files = []
+    with open("train_observers.txt", 'r') as f:
+        for line in f.readlines():
+            ob_training_img_file = os.path.join(image_dir, line.strip() + ".jpg")
+            ob_training_gt_file = os.path.join(gt_dir, line.strip() + ".png")
+            ob_training_image_files.append(ob_training_img_file)
+            ob_training_gt_files.append(ob_training_gt_file)
+
+    # show training instructions
+    display_instructions(mywin, TRAINING_INSTRUCTION)
+
+    # run training experiments
+    skip = False
+    for i in range(10):
+        ob_training_img_file = ob_training_image_files[i]
+        ob_training_gt_file = ob_training_gt_files[i]
+
+        with Image.open(ob_training_img_file) as img:
+            original_width, original_height = img.size
+
+        with Image.open(ob_training_gt_file) as gt:
+            gt_ndarr = np.array(gt)
+            gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
+
+        # Ask for the observer's estimate after the image is shown
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, -500), height=30)
+
+        # display the number of image
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, 450), height=30)
+
+        response = ''
+
+        # Compute new dimensions while maintaining aspect ratio
+        new_width = NEW_IMG_WIDTH
+        aspect_ratio = original_width / original_height1
+        new_height = new_width / aspect_ratio
+
+        # Create a visual stimulus for the image
+        stimulus = visual.ImageStim(win=mywin, image=ob_training_img_file, size=(new_width, new_height))
+
+        while True:  # Keep looping until they press 'enter'
+            keys = event.getKeys()
+            if 'escape' in keys:
+                skip = True
+                break
+
+            if 'return' in keys:
+                if response.isdigit() and int(response) >= 0 and int(response) <= 100:  # Check if the response is a positive integer
+                    # Display the ground truth size of the image
+                    ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=30)
+                    ground_truth_text.setText(f"The correct size of the image is {gt:.1f}")
+                    ground_truth_text.draw()
+                    mywin.flip()
+                    core.wait(3.5)
+                    break
+                else:  # If not a positive integer, prompt the observer and reset the response
+                    response = ''
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=20, color='white')
+                    prompt.setText("Please enter a positive integer within 100. Try again.")
+                    prompt.draw()
+                    mywin.flip()
+                    core.wait(2)
+
+            elif 'backspace' in keys:
+                response = response[:-1]  # Remove the last character
+            elif len(keys) > 0:
+                response += keys[0]  # Add the pressed key to the string
+
+            input_text.setText("Your estimate: " + response)
+            num_img_text.setText(f"image# {i + 1} / {10}")
+            stimulus.draw()
+            input_text.draw()
+            num_img_text.draw()
+            if args.assistance_tool == "grid":
+                assistance_tool_grid(mywin, stimulus, row=4, col=5)
+            elif args.assistance_tool == "circle":
+                assistance_tool_circle(mywin, stimulus)
+            else:
+                raise NotImplementedError
+            mywin.flip()
+
+        if skip:
+            break
+
+    # show size estimation instructions
+    display_instructions(mywin, ESTIMATION_INSTRUCTION)
 
     # Check for saved state
     try:
@@ -45,48 +154,12 @@ def main():
                 if 'n' in keys:
                     start_index = 0
                     responses = []
-                    saved_elapsed_time=0
+                    saved_elapsed_time = 0
                     break
     except FileNotFoundError:
         start_index = 0
         responses = []
         saved_elapsed_time = 0
-
-    # Specify your image directory
-    base_dir = DATASET_PATH
-    dataset_dir = "VOCdevkit/VOC2012/"
-    image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages/")
-    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug/")
-    cat_file = os.path.join("cat.txt")
-    image_files = []
-    gt_files = []
-
-    with open(cat_file, 'r') as f:
-        for line in f.readlines():
-            file = line.strip()
-            image_files.append(os.path.join(image_dir, file))
-            filename = file.split(".")[0]
-            gt_files.append(os.path.join(gt_dir, filename + ".png"))
-
-    n = len(image_files)
-
-    instruction = "Please estimate the size of the cat in the image as a percentage of the whole image. " \
-                  "For instance, if you think the object occupies half the image, enter '50'. " \
-                  "Please provide your estimate to the nearest whole number. Press 'Enter' to run the experiment. There are two types of " \
-                  "assistance tool you can use to help you with the estimation. Use option --assistance-tool or -at to choose the tool you " \
-                  "want to use. If you choose 'grid', you can see grids on the image that split the image into 5% patches." \
-                  "If you choose 'circle' you will see 5 circles on the image representing the 1%, 5%, 10%, 20%, and 50% area of the image."
-
-    # Display a prompt above the image
-    prompt = visual.TextStim(win=mywin, text=instruction, pos=(0, 0), height=30, wrapWidth=1000, color='white')
-
-    # Draw the prompt
-    while True:
-        prompt.draw()
-        mywin.flip()
-        keys = event.getKeys()
-        if 'return' in keys:
-            break
 
     # Start the timer with the saved elapsed time
     experiment_timer = core.Clock()
@@ -103,7 +176,7 @@ def main():
 
         with Image.open(gt_file) as gt:
             gt_ndarr = np.array(gt)
-            gt = (gt_ndarr == Cat).sum() / (original_width * original_height) * 100
+            gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
         input_text = visual.TextStim(win=mywin, text='', pos=(0, -500), height=30)
@@ -116,7 +189,7 @@ def main():
         response = ''
 
         # Compute new dimensions while maintaining aspect ratio
-        new_width = 800
+        new_width = NEW_IMG_WIDTH
         aspect_ratio = original_width / original_height
         new_height = new_width / aspect_ratio
 
@@ -127,7 +200,6 @@ def main():
             # keep displaying the elapsed time and listening for the key.
             elapsed_time = experiment_timer.getTime()
             time_display.text = f"Elapsed Time: {elapsed_time:.0f} seconds"
-
 
             keys = event.getKeys()
             if 'escape' in keys:
@@ -155,7 +227,7 @@ def main():
                 response += keys[0]  # Add the pressed key to the string
 
             input_text.setText("Your estimate: " + response)
-            num_img_text.setText(f"image# {i+1} / {n}")
+            num_img_text.setText(f"image# {i + 1} / {n}")
             stimulus.draw()
             time_display.draw()
             input_text.draw()
@@ -227,6 +299,19 @@ def assistance_tool_circle(mywin, stimulus):
     circle10.draw()
     circle20.draw()
     circle50.draw()
+
+
+def display_instructions(window, instruction):
+    # Display a prompt above the image
+    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=30, wrapWidth=1000, color='white')
+
+    # Draw the prompt
+    while True:
+        prompt.draw()
+        window.flip()
+        keys = event.getKeys()
+        if 'return' in keys:
+            break
 
 
 if __name__ == "__main__":
