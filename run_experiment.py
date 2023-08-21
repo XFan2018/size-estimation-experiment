@@ -6,6 +6,7 @@ import os
 import csv
 import json
 import argparse
+import numpy as np
 
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
@@ -15,12 +16,13 @@ parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assi
 args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
-
+Cat = 8
 
 def main():
     # Setup the Window
     assert "," in args.window_size and len(args.window_size.split(",")) == 2 and all([s.isdigit() for s in args.window_size.split(",")]), \
         "window size argument must be two positive integers separated by ',' representing the display window size."
+
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
 
     # Check for saved state
@@ -54,13 +56,17 @@ def main():
     base_dir = DATASET_PATH
     dataset_dir = "VOCdevkit/VOC2012/"
     image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages/")
-    cat_file = os.path.join(base_dir, dataset_dir, "cat.txt")
+    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug/")
+    cat_file = os.path.join("cat.txt")
     image_files = []
+    gt_files = []
 
     with open(cat_file, 'r') as f:
         for line in f.readlines():
             file = line.strip()
             image_files.append(os.path.join(image_dir, file))
+            filename = file.split(".")[0]
+            gt_files.append(os.path.join(gt_dir, filename + ".png"))
 
     n = len(image_files)
 
@@ -87,9 +93,17 @@ def main():
     experiment_timer.addTime(saved_elapsed_time)  # Adjust the timer by adding the saved elapsed time
 
     for i in range(start_index, n):
-        image_file = image_files[i]
         if i >= 10:
             break
+
+        image_file = image_files[i]
+        gt_file = gt_files[i]
+        with Image.open(image_file) as img:
+            original_width, original_height = img.size
+
+        with Image.open(gt_file) as gt:
+            gt_ndarr = np.array(gt)
+            gt = (gt_ndarr == Cat).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
         input_text = visual.TextStim(win=mywin, text='', pos=(0, -500), height=30)
@@ -100,9 +114,6 @@ def main():
         # display the duration of time
         time_display = visual.TextStim(win=mywin, pos=(0, 500), color='white', height=30)
         response = ''
-
-        with Image.open(image_file) as img:
-            original_width, original_height = img.size
 
         # Compute new dimensions while maintaining aspect ratio
         new_width = 800
@@ -157,12 +168,11 @@ def main():
                 raise NotImplementedError
             mywin.flip()
 
-
-        responses.append((image_file.split(os.sep)[-1], response))
+        responses.append((image_file.split(os.sep)[-1], response, f"{gt:.1f}"))
 
     with open('responses.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow(['Image File', 'Response'])  # Writing header
+        writer.writerow(['Image File', 'Response', 'GT'])  # Writing header
         for row in responses:
             writer.writerow(row)
 
