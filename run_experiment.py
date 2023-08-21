@@ -81,7 +81,7 @@ def main():
 
         # Compute new dimensions while maintaining aspect ratio
         new_width = NEW_IMG_WIDTH
-        aspect_ratio = original_width / original_height1
+        aspect_ratio = original_width / original_height
         new_height = new_width / aspect_ratio
 
         # Create a visual stimulus for the image
