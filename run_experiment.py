@@ -18,8 +18,7 @@ args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
 CAT = 8
-NEW_IMG_WIDTH = 800
-
+NEW_IMG_WIDTH = int(args.window_size.split(",")[0]) // 2
 
 def main():
     # Setup the Window
@@ -72,10 +71,10 @@ def main():
             gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, -500), height=30)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH)//2), height=NEW_IMG_WIDTH//20)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, 450), height=30)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH//2), height=NEW_IMG_WIDTH//20)
 
         response = ''
 
@@ -96,7 +95,7 @@ def main():
             if 'return' in keys:
                 if response.isdigit() and int(response) >= 0 and int(response) <= 100:  # Check if the response is a positive integer
                     # Display the ground truth size of the image
-                    ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=30)
+                    ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=NEW_IMG_WIDTH//20)
                     ground_truth_text.setText(f"The correct size of the image is {gt:.1f}")
                     ground_truth_text.draw()
                     mywin.flip()
@@ -104,7 +103,7 @@ def main():
                     break
                 else:  # If not a positive integer, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=20, color='white')
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH//20, color='white')
                     prompt.setText("Please enter a positive integer within 100. Try again.")
                     prompt.draw()
                     mywin.flip()
@@ -144,7 +143,7 @@ def main():
 
             load_state = f"You have an unfinished experiment. If you want to continue the unfinished experiment from the #{start_index + 1} image " \
                          f"please press 'y', otherwise press 'n'."
-            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=30, wrapWidth=1000, color='white')
+            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=NEW_IMG_WIDTH//20, wrapWidth=NEW_IMG_WIDTH/0.8, color='white')
             while True:
                 prompt.draw()
                 mywin.flip()
@@ -179,13 +178,13 @@ def main():
             gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, -500), height=30)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH)//2), height=NEW_IMG_WIDTH//20)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, 450), height=30)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH//2), height=NEW_IMG_WIDTH//20)
 
         # display the duration of time
-        time_display = visual.TextStim(win=mywin, pos=(0, 500), color='white', height=30)
+        time_display = visual.TextStim(win=mywin, pos=(0, NEW_IMG_WIDTH//1.6), color='white', height=NEW_IMG_WIDTH//20)
         response = ''
 
         # Compute new dimensions while maintaining aspect ratio
@@ -215,7 +214,7 @@ def main():
                     break
                 else:  # If not a positive integer, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=20, color='white')
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH//20, color='white')
                     prompt.setText("Please enter a positive integer within 100. Try again.")
                     prompt.draw()
                     mywin.flip()
@@ -303,7 +302,7 @@ def assistance_tool_circle(mywin, stimulus):
 
 def display_instructions(window, instruction):
     # Display a prompt above the image
-    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=30, wrapWidth=1000, color='white')
+    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=NEW_IMG_WIDTH//20, wrapWidth=NEW_IMG_WIDTH/0.8, color='white')
 
     # Draw the prompt
     while True:
