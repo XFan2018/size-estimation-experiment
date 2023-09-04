@@ -165,9 +165,6 @@ def main():
     experiment_timer.addTime(saved_elapsed_time)  # Adjust the timer by adding the saved elapsed time
 
     for i in range(start_index, n):
-        if i >= 10:
-            break
-
         image_file = image_files[i]
         gt_file = gt_files[i]
         with Image.open(image_file) as img:
