@@ -11,10 +11,11 @@ from instructions import *
 
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
-parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person"])
+parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person", "test"])
 parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1600,1200", default="1600,1200")
+parser.add_argument("--result-file", '-f', type=str, help="file name to store the experimental results", default="responses")
 parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid or circle", default="grid",
-                    choices=["grid", "circle"], required=True)
+                    choices=["grid", "circle"])
 args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path
@@ -240,7 +241,7 @@ def main():
 
         responses.append((image_file.split(os.sep)[-1], response, f"{gt:.1f}"))
 
-    with open('responses.csv', 'w', newline='') as csvfile:
+    with open(args.result_file + ".csv", 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Image File', 'Response', 'GT'])  # Writing header
         for row in responses:
