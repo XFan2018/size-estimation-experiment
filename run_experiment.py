@@ -17,7 +17,7 @@ parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assi
                     choices=["grid", "circle"], required=True)
 args = parser.parse_args()
 
-DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
+DATASET_PATH = args.dataset_path
 INDEX = Index.get_index(args.category)
 NEW_IMG_WIDTH = int(args.window_size.split(",")[0]) // 2
 
@@ -31,9 +31,9 @@ def main():
 
     # Specify your image directory
     base_dir = DATASET_PATH
-    dataset_dir = "VOCdevkit/VOC2012/"
-    image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages/")
-    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug/")
+    dataset_dir = "VOCdevkit" + os.sep + "VOC2012" + os.sep
+    image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages" + os.sep)
+    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug" + os.sep)
     cat_file = os.path.join("data", F"{args.category}.txt")
     image_files = []
     gt_files = []
@@ -49,7 +49,7 @@ def main():
 
     ob_training_image_files = []
     ob_training_gt_files = []
-    with open(f"data/{args.category}_training_images.txt", 'r') as f:
+    with open(os.path.join("data", f"{args.category}_training_images.txt"), 'r') as f:
         for line in f.readlines():
             ob_training_img_file = os.path.join(image_dir, line.strip() + ".jpg")
             ob_training_gt_file = os.path.join(gt_dir, line.strip() + ".png")
