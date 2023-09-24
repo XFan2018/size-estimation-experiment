@@ -1,5 +1,5 @@
 import math
-
+from class_mapping import Index
 from PIL import Image
 from psychopy import visual, core, event
 import os
@@ -11,14 +11,16 @@ from instructions import *
 
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
+parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person"])
 parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1600,1200", default="1600,1200")
 parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid or circle", default="grid",
                     choices=["grid", "circle"], required=True)
 args = parser.parse_args()
 
 DATASET_PATH = args.dataset_path  # "/Users/leo/Desktop/research/Pascal/"
-CAT = 8
+INDEX = Index.get_index(args.category)
 NEW_IMG_WIDTH = int(args.window_size.split(",")[0]) // 2
+
 
 def main():
     # Setup the Window
@@ -32,14 +34,14 @@ def main():
     dataset_dir = "VOCdevkit/VOC2012/"
     image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages/")
     gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug/")
-    cat_file = os.path.join("cat.txt")
+    cat_file = os.path.join("data", F"{args.category}.txt")
     image_files = []
     gt_files = []
 
     with open(cat_file, 'r') as f:
         for line in f.readlines():
             file = line.strip()
-            image_files.append(os.path.join(image_dir, file))
+            image_files.append(os.path.join(image_dir, file + ".jpg"))
             filename = file.split(".")[0]
             gt_files.append(os.path.join(gt_dir, filename + ".png"))
 
@@ -47,7 +49,7 @@ def main():
 
     ob_training_image_files = []
     ob_training_gt_files = []
-    with open("train_observers.txt", 'r') as f:
+    with open(f"data/{args.category}_training_images.txt", 'r') as f:
         for line in f.readlines():
             ob_training_img_file = os.path.join(image_dir, line.strip() + ".jpg")
             ob_training_gt_file = os.path.join(gt_dir, line.strip() + ".png")
@@ -55,7 +57,7 @@ def main():
             ob_training_gt_files.append(ob_training_gt_file)
 
     # show training instructions
-    display_instructions(mywin, TRAINING_INSTRUCTION)
+    display_instructions(mywin, training_instruction(args.category))
 
     # run training experiments
     skip = False
@@ -68,13 +70,13 @@ def main():
 
         with Image.open(ob_training_gt_file) as gt:
             gt_ndarr = np.array(gt)
-            gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
+            gt = (gt_ndarr == INDEX).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH)//2), height=NEW_IMG_WIDTH//20)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH) // 2), height=NEW_IMG_WIDTH // 20)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH//2), height=NEW_IMG_WIDTH//20)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH // 2), height=NEW_IMG_WIDTH // 20)
 
         response = ''
 
@@ -95,7 +97,7 @@ def main():
             if 'return' in keys:
                 if response.isdigit() and int(response) >= 0 and int(response) <= 100:  # Check if the response is a positive integer
                     # Display the ground truth size of the image
-                    ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=NEW_IMG_WIDTH//20)
+                    ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=NEW_IMG_WIDTH // 20)
                     ground_truth_text.setText(f"The correct size of the image is {gt:.1f}")
                     ground_truth_text.draw()
                     mywin.flip()
@@ -103,7 +105,7 @@ def main():
                     break
                 else:  # If not a positive integer, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH//20, color='white')
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH // 20, color='white')
                     prompt.setText("Please enter a positive integer within 100. Try again.")
                     prompt.draw()
                     mywin.flip()
@@ -131,7 +133,7 @@ def main():
             break
 
     # show size estimation instructions
-    display_instructions(mywin, ESTIMATION_INSTRUCTION)
+    display_instructions(mywin, estimation_instruction(args.category))
 
     # Check for saved state
     try:
@@ -143,7 +145,7 @@ def main():
 
             load_state = f"You have an unfinished experiment. If you want to continue the unfinished experiment from the #{start_index + 1} image " \
                          f"please press 'y', otherwise press 'n'."
-            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=NEW_IMG_WIDTH//20, wrapWidth=NEW_IMG_WIDTH/0.8, color='white')
+            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=NEW_IMG_WIDTH // 20, wrapWidth=NEW_IMG_WIDTH / 0.8, color='white')
             while True:
                 prompt.draw()
                 mywin.flip()
@@ -172,16 +174,16 @@ def main():
 
         with Image.open(gt_file) as gt:
             gt_ndarr = np.array(gt)
-            gt = (gt_ndarr == CAT).sum() / (original_width * original_height) * 100
+            gt = (gt_ndarr == INDEX).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH)//2), height=NEW_IMG_WIDTH//20)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-NEW_IMG_WIDTH) // 2), height=NEW_IMG_WIDTH // 20)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH//2), height=NEW_IMG_WIDTH//20)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, NEW_IMG_WIDTH // 2), height=NEW_IMG_WIDTH // 20)
 
         # display the duration of time
-        time_display = visual.TextStim(win=mywin, pos=(0, NEW_IMG_WIDTH//1.6), color='white', height=NEW_IMG_WIDTH//20)
+        time_display = visual.TextStim(win=mywin, pos=(0, NEW_IMG_WIDTH // 1.6), color='white', height=NEW_IMG_WIDTH // 20)
         response = ''
 
         # Compute new dimensions while maintaining aspect ratio
@@ -211,7 +213,7 @@ def main():
                     break
                 else:  # If not a positive integer, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH//20, color='white')
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=NEW_IMG_WIDTH // 20, color='white')
                     prompt.setText("Please enter a positive integer within 100. Try again.")
                     prompt.draw()
                     mywin.flip()
@@ -299,7 +301,7 @@ def assistance_tool_circle(mywin, stimulus):
 
 def display_instructions(window, instruction):
     # Display a prompt above the image
-    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=NEW_IMG_WIDTH//20, wrapWidth=NEW_IMG_WIDTH/0.8, color='white')
+    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=NEW_IMG_WIDTH // 20, wrapWidth=NEW_IMG_WIDTH / 0.8, color='white')
 
     # Draw the prompt
     while True:
