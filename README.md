@@ -21,6 +21,8 @@ python3 -m pascal-size-estimate -dp <your dataset path (to VOC2012 folder)> -c d
 
 options:
 
+`dp` path to PASCAL dataset on local system. 
+
 `category` indicates the class in Pascal dataset
 
 `window-size` sets the window size of the program (default 1600,800). If window is too large, try 800,600
