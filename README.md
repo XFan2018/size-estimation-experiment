@@ -16,7 +16,7 @@ dataset can be download from [here](https://uofwaterloo-my.sharepoint.com/:f:/r/
 git clone https://github.com/XFan2018/size-estimation-experiment.git
 cd size-estimation-experiment
 pip install -r requirements.txt
-python3 -m pascal-size-estimate -dp <your dataset path> -c dog  # run dog class
+python3 -m pascal-size-estimate -dp <your dataset path (to VOC2012 folder)> -c dog  # run dog class
 ```
 
 options:
@@ -28,14 +28,14 @@ options:
 e.g.
 
 ```bash
-python3 -m pascal-size-estimate -dp /Users/leo/Desktop/research/Pascal/ -c dog --window-size 800,600
+python3 -m pascal-size-estimate -dp .../VOC2012/ -c dog --window-size 800,600
 ```
 
 `result-file` sets the file name of the experimental results
 
 e.g.
 ```bash
-python3 -m pascal-size-estimate -dp /Users/leo/Desktop/research/Pascal/ -c dog --result-file output  # no extension, '.csv' will be appended to the file name
+python3 -m pascal-size-estimate -dp .../VOC2012/ -c dog --result-file output  # no extension, '.csv' will be appended to the file name
 ```
 
 
@@ -43,7 +43,7 @@ python3 -m pascal-size-estimate -dp /Users/leo/Desktop/research/Pascal/ -c dog -
 
 e.g.
 ```bash
-python3 -m pascal-size-estimate -dp /Users/leo/Desktop/research/Pascal/ -c dog assistance-tool circle # default is grid
+python3 -m pascal-size-estimate -dp .../VOC2012/ -c dog assistance-tool circle # default is grid
 ```
 
 You can also check descriptions of options with help command
@@ -56,7 +56,7 @@ It's highly recommend you check the tool has been set up properly (intermediate 
 
 Run the following command (multiple times). It provides a short experiment: 10 training images + 5 real experiment images
 ```bash
-python3 -m pascal-size-estimate -dp /Users/leo/Desktop/research/Pascal/ -c test
+python3 -m pascal-size-estimate -dp .../VOC2012/  -c test
 ```
 
 Here is a checklist you can use to verify if the tool is working properly:

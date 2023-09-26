@@ -32,9 +32,8 @@ def main():
 
     # Specify your image directory
     base_dir = DATASET_PATH
-    dataset_dir = "VOCdevkit" + os.sep + "VOC2012" + os.sep
-    image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages" + os.sep)
-    gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug" + os.sep)
+    image_dir = os.path.join(base_dir, "JPEGImages" + os.sep)
+    gt_dir = os.path.join(base_dir, "SegmentationClassAug" + os.sep)
     cat_file = os.path.join("pascal-size-estimate", "data", F"{args.category}.txt")
     image_files = []
     gt_files = []
