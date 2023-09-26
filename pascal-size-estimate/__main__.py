@@ -1,5 +1,5 @@
 import math
-from class_mapping import Index
+from .class_mapping import Index
 from PIL import Image
 from psychopy import visual, core, event
 import os
@@ -7,7 +7,7 @@ import csv
 import json
 import argparse
 import numpy as np
-from instructions import *
+from .instructions import *
 
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
@@ -21,7 +21,7 @@ args = parser.parse_args()
 DATASET_PATH = args.dataset_path
 INDEX = Index.get_index(args.category)
 NEW_IMG_WIDTH = int(args.window_size.split(",")[0]) // 2
-
+current_path = os.getcwd()
 
 def main():
     # Setup the Window
@@ -35,7 +35,7 @@ def main():
     dataset_dir = "VOCdevkit" + os.sep + "VOC2012" + os.sep
     image_dir = os.path.join(base_dir, dataset_dir, "JPEGImages" + os.sep)
     gt_dir = os.path.join(base_dir, dataset_dir, "SegmentationClassAug" + os.sep)
-    cat_file = os.path.join("data", F"{args.category}.txt")
+    cat_file = os.path.join("pascal-size-estimate", "data", F"{args.category}.txt")
     image_files = []
     gt_files = []
 
@@ -50,7 +50,7 @@ def main():
 
     ob_training_image_files = []
     ob_training_gt_files = []
-    with open(os.path.join("data", f"{args.category}_training_images.txt"), 'r') as f:
+    with open(os.path.join("pascal-size-estimate", "data", f"{args.category}_training_images.txt"), 'r') as f:
         for line in f.readlines():
             ob_training_img_file = os.path.join(image_dir, line.strip() + ".jpg")
             ob_training_gt_file = os.path.join(gt_dir, line.strip() + ".png")
