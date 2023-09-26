@@ -20,6 +20,7 @@ python3 -m pascal-size-estimate -dp <your dataset path> -c dog  # run dog class
 ```
 
 options:
+
 `dp` path to PASCAL dataset on local system. 
 
 `category` indicates the class in Pascal dataset
