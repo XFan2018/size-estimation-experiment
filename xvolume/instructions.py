@@ -20,9 +20,11 @@ def estimation_instruction(category):
            f"Press 'Enter' to run the experiment. The correct size of the {category} will NOT be shown to you for the real dataset. "
 
 
-def invalid_input_value():
-    return "Please enter a valid number between 0 and 100. \nTry again."
+def invalid_input_value(unit):
+    limit = 20 if unit == "boxes" else 100
+    return f"Please enter a valid number between 0 and {limit}. \nTry again."
 
 
-def ground_truth_image_size(gt):
-    return f"The correct size of the image is {gt:.1f} \n\n Do NOT press Enter \nJumping to the next image automatically"
+def ground_truth_image_size(gt, unit):
+    gt = gt / 5 if unit == "boxes" else gt
+    return f"The correct size of the image is {gt:.1f} {unit} \n\n Do NOT press Enter \nJumping to the next image automatically"

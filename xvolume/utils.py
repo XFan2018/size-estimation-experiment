@@ -10,6 +10,7 @@ def get_args():
     parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
     parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person", "test"])
     parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1600,1200", default="1600,1200")
+    parser.add_argument("--unit", '-u', type=str, help="input unit", default="boxes", choices=["boxes", "percent"])
     parser.add_argument("--result-file", '-f', type=str, help="file name to store the experimental results", default="responses")
     parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid or circle", default="grid",
                         choices=["grid", "circle"])
@@ -75,13 +76,16 @@ def assistance_tool_circle(mywin, stimulus):
     circle50.draw()
 
 
-def valid_input(string):
+def valid_input(string, unit):
     pattern = r"^\d+(\.\d)?\d*$"
     match = re.fullmatch(pattern, string)
     if not match:
         return False
     num = float(string)
-    return 0 <= num <= 100
+    if unit == "boxes":
+        return 0 <= num <= 20
+    else:
+        return 0 <= num <= 100
 
 
 def display_instructions(window, instruction):

@@ -88,10 +88,10 @@ def main():
                 break
 
             if 'return' in keys:
-                if valid_input(response):  # Check if the response is a float between 0 and 100
+                if valid_input(response, args.unit):  # Check if the response is a float between 0 and 100
                     # Display the ground truth size of the image
                     ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=img_width // 20)
-                    ground_truth_text.setText(ground_truth_image_size(gt))
+                    ground_truth_text.setText(ground_truth_image_size(gt, args.unit))
                     ground_truth_text.draw()
                     mywin.flip()
                     core.wait(GT_VALUE_DISPLAY_TIME)
@@ -99,7 +99,7 @@ def main():
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value())
+                    prompt.setText(invalid_input_value(args.unit))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -205,12 +205,12 @@ def main():
                 core.quit()
 
             if 'return' in keys:
-                if valid_input(response):
+                if valid_input(response, args.unit):
                     break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value())
+                    prompt.setText(invalid_input_value(args.unit))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -237,6 +237,8 @@ def main():
                 raise NotImplementedError
             mywin.flip()
 
+        if args.unit == "boxes":
+            response = str(float(response) * 5)
         responses.append((image_file.split(os.sep)[-1], response, f"{gt:.1f}"))
 
     with open(args.result_file + ".csv", 'w', newline='') as csvfile:
