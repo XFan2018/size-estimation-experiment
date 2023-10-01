@@ -9,6 +9,8 @@ import argparse
 import numpy as np
 from .instructions import *
 
+
+
 parser = argparse.ArgumentParser("Size Estimation Experiment")
 parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
 parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person", "test"])
@@ -34,7 +36,7 @@ def main():
     base_dir = DATASET_PATH
     image_dir = os.path.join(base_dir, "JPEGImages" + os.sep)
     gt_dir = os.path.join(base_dir, "SegmentationClassAug" + os.sep)
-    cat_file = os.path.join("pascal-size-estimate", "data", F"{args.category}.txt")
+    cat_file = os.path.join(__package__, "data", F"{args.category}.txt")
     image_files = []
     gt_files = []
 
@@ -49,7 +51,7 @@ def main():
 
     ob_training_image_files = []
     ob_training_gt_files = []
-    with open(os.path.join("pascal-size-estimate", "data", f"{args.category}_training_images.txt"), 'r') as f:
+    with open(os.path.join(__package__, "data", f"{args.category}_training_images.txt"), 'r') as f:
         for line in f.readlines():
             ob_training_img_file = os.path.join(image_dir, line.strip() + ".jpg")
             ob_training_gt_file = os.path.join(gt_dir, line.strip() + ".png")
@@ -122,7 +124,7 @@ def main():
             input_text.draw()
             num_img_text.draw()
             if args.assistance_tool == "grid":
-                assistance_tool_grid(mywin, stimulus, row=4, col=5)
+                assistance_tool_grid(mywin, stimulus)
             elif args.assistance_tool == "circle":
                 assistance_tool_circle(mywin, stimulus)
             else:
@@ -231,7 +233,7 @@ def main():
             input_text.draw()
             num_img_text.draw()
             if args.assistance_tool == "grid":
-                assistance_tool_grid(mywin, stimulus, row=4, col=5)
+                assistance_tool_grid(mywin, stimulus)
             elif args.assistance_tool == "circle":
                 assistance_tool_circle(mywin, stimulus)
             else:
@@ -249,7 +251,15 @@ def main():
     mywin.close()
 
 
-def assistance_tool_grid(mywin, stimulus, row, col):
+def assistance_tool_grid(mywin, stimulus):
+    # assign number of rows and columns as per the aspect ratio
+    if stimulus.size[0] > stimulus.size[1]:
+        # width > height
+        row, col = 4, 5
+    else:
+        # width <= height
+        row, col = 5, 4
+
     # Draw a grid over the image
     image_width = stimulus.size[0]  # width of the image in pixels
     image_height = stimulus.size[1]  # height of the image in pixels
