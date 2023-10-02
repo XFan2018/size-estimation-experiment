@@ -20,6 +20,8 @@ def main():
     # Setup the Window
     assert "," in args.window_size and len(args.window_size.split(",")) == 2 and all([s.isdigit() for s in args.window_size.split(",")]), \
         "window size argument must be two positive integers separated by ',' representing the display window size."
+    if args.assistance_tool == "absbox":
+        assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
 
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
 
@@ -88,10 +90,10 @@ def main():
                 break
 
             if 'return' in keys:
-                if valid_input(response, args.unit):  # Check if the response is a float between 0 and 100
+                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]):  # Check if the response is a float between 0 and 100
                     # Display the ground truth size of the image
                     ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, 0), height=img_width // 20)
-                    ground_truth_text.setText(ground_truth_image_size(gt, args.unit))
+                    ground_truth_text.setText(ground_truth_image_size(gt, args.assistance_tool, args.unit, stimulus.size[0], stimulus.size[1]))
                     ground_truth_text.draw()
                     mywin.flip()
                     core.wait(GT_VALUE_DISPLAY_TIME)
@@ -99,7 +101,7 @@ def main():
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit))
+                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -117,12 +119,7 @@ def main():
             stimulus.draw()
             input_text.draw()
             num_img_text.draw()
-            if args.assistance_tool == "grid":
-                assistance_tool_grid(mywin, stimulus)
-            elif args.assistance_tool == "circle":
-                assistance_tool_circle(mywin, stimulus)
-            else:
-                raise NotImplementedError
+            assistance_tool(mywin, stimulus, args.assistance_tool)
             mywin.flip()
 
         if skip:
@@ -205,12 +202,12 @@ def main():
                 core.quit()
 
             if 'return' in keys:
-                if valid_input(response, args.unit):
+                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]):
                     break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit))
+                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -229,17 +226,15 @@ def main():
             time_display.draw()
             input_text.draw()
             num_img_text.draw()
-            if args.assistance_tool == "grid":
-                assistance_tool_grid(mywin, stimulus)
-            elif args.assistance_tool == "circle":
-                assistance_tool_circle(mywin, stimulus)
-            else:
-                raise NotImplementedError
+            assistance_tool(mywin, stimulus, args.assistance_tool)
             mywin.flip()
 
-        if args.unit == "boxes":
-            response = str(float(response) * 5)
-        responses.append((image_file.split(os.sep)[-1], response, f"{gt:.1f}"))
+        size = compute_size(response,
+                            tool=args.assistance_tool,
+                            unit=args.unit,
+                            image_width=stimulus.size[0],
+                            image_height=stimulus.size[1])
+        responses.append((image_file.split(os.sep)[-1], size, f"{gt:.1f}"))
 
     with open(args.result_file + ".csv", 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
