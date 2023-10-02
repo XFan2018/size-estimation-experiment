@@ -1,9 +1,9 @@
 # size-estimation-experiment
-A tool for subjects to estimate the size of objects in PASCAL VOC dataset.
+A labeling tool to label the size of objects in PASCAL VOC dataset.
 
 ### Dataset
 dataset can be download from [here](https://uofwaterloo-my.sharepoint.com/:f:/r/personal/x44fan_uwaterloo_ca/Documents/target-size/pascal?csf=1&web=1&e=ZWH7OY)
-### tested environment on macOS
+### Tested environment on macOS and Windows
 | software   | versions |
 |------------|----------|
 | Python     | 3.10.12  |
@@ -33,7 +33,7 @@ e.g.
 python3 -m xvolume -dp .../VOC2012/ -c dog --window-size 800,600
 ```
 
-`result-file` sets the file name of the experimental results
+`result-file` sets the file name of the experimental results (default is `responses`)
 
 e.g.
 ```bash
@@ -41,11 +41,21 @@ python3 -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension,
 ```
 
 
-`assistance-tool` sets the assistance tool for size estimation experiments. You can choose from `grid` or `circle`
+`assistance-tool` sets the assistance tool for size estimation experiments. You can choose from `grid` or `absbox`
+
+- grid: 20 boxes, each signifies 5% of the volume
+- absbox: boxes of absolute size, size of each box is the same across the dataset. 
 
 e.g.
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog assistance-tool circle # default is grid
+python3 -m xvolume -dp .../VOC2012/ -c dog --assistance-tool absbox # default is grid
+```
+
+`unit` sets the input unit (percent or boxes). When using absbox as assistance tool, only unit `boxes` is available
+
+e.g.
+```bash
+python3 -m xvolume -dp .../VOC2012/ -c dog --unit percent  # default is boxes
 ```
 
 You can also check descriptions of options with help command
@@ -53,7 +63,7 @@ You can also check descriptions of options with help command
 python3 -m xvolume --help
 ```
 
-### test the tool is working 
+### Test the tool is working 
 It's highly recommend you check the tool has been set up properly (intermediate and final experimental results are saved) before running the whole experiment (whole experiment may take hours to finish)
 
 Run the following command (multiple times). It provides a short experiment: 10 training images + 5 real experiment images
@@ -67,7 +77,7 @@ Here is a checklist you can use to verify if the tool is working properly:
 - [ ] If you quit in the middle, you can see a json file named `saved_state.json` storing intermediate results
 - [ ] If you resume the experiment, when the experiment is done, you can see experimental results stored in a csv file. 
 
-### how to use the tool
+### How to use the tool
 After running the above command in your terminal, a window will pop up and display the instructions. Press `Enter` key on your keyboard to continue. For training phase, you can skip by pressing `Esc` key on your keyboard when you see a training image. It shows another instructions for the real experiment.
 Press `Enter` key to run the experiment. You can only enter positive integers from 0 to 100. After you enter the number, press `Enter` to jump to the next image. When you want to have a break, press `Esc` to quit the experiment. Next time you can resume from where you end by pressing `y` when it asks whether you 
 want to resume your previous unfinished experiment. Otherwise press `n`.
