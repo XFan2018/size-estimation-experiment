@@ -130,7 +130,7 @@ def main():
 
     # Check for saved state
     try:
-        with open('saved_state.json', 'r') as f:
+        with open(os.path.join("states", f'{args.category}_saved_state.json'), 'r') as f:
             saved_state = json.load(f)
             start_index = saved_state['current_index']
             responses = saved_state['responses']
@@ -195,7 +195,7 @@ def main():
             keys = event.getKeys()
             if 'escape' in keys:
                 # Save the state
-                with open('saved_state.json', 'w') as f:
+                with open(os.path.join("states", f'{args.category}_saved_state.json'), 'w') as f:
                     elapsed_time = experiment_timer.getTime()
                     json.dump({'current_index': i, 'responses': responses, 'elapsed_time': elapsed_time}, f)
                 mywin.close()
@@ -234,9 +234,9 @@ def main():
                             unit=args.unit,
                             image_width=stimulus.size[0],
                             image_height=stimulus.size[1])
-        responses.append((image_file.split(os.sep)[-1], size, f"{gt:.1f}"))
+        responses.append((image_file.split(os.sep)[-1], size, f"{gt:.2f}"))
 
-    with open(args.result_file + ".csv", 'w', newline='') as csvfile:
+    with open(os.path.join("results", args.result_file) + ".csv", 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Image File', 'Response', 'GT'])  # Writing header
         for row in responses:

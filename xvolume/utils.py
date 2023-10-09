@@ -8,12 +8,17 @@ from psychopy import visual, event
 def get_args():
     parser = argparse.ArgumentParser("Size Estimation Experiment")
     parser.add_argument("--dataset-path", "-dp", type=str, required=True, help="path to the Pascal dataset")
-    parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment", choices=["cat", "dog", "person", "test"])
-    parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1600,1200", default="1600,1200")
+    parser.add_argument("--category", "-c", type=str, required=True, help="choose the category for the experiment",
+                        choices=['aeroplane', 'bicycle', 'bird', 'boat',
+                                 'bottle', 'bus', 'car', 'cat', 'chair',
+                                 'cow', 'diningtable', 'dog', 'horse',
+                                 'motorbike', 'person', 'pottedplant',
+                                 'sheep', 'sofa', 'train', 'tvmonitor', 'test'])
+    parser.add_argument("--window-size", '-ws', type=str, help="size of the display window, default is 1200,900", default="1200,900")
     parser.add_argument("--unit", '-u', type=str, help="input unit", default="boxes", choices=["boxes", "percent"])
     parser.add_argument("--result-file", '-f', type=str, help="file name to store the experimental results", default="responses")
     parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid, and box with absolute size",
-                        default="grid",
+                        default="absbox",
                         choices=["grid", "absbox"])
     args = parser.parse_args()
     return args
@@ -169,5 +174,3 @@ def compute_size(response: str, tool: str, unit: str, image_width: float, image_
         else:
             size = float(response)
     return str(round(size, 1))
-
-

@@ -21,11 +21,13 @@ python3 -m xvolume -dp <your dataset path (to VOC2012 folder)> -c dog  # run dog
 
 options:
 
-`dp` path to PASCAL dataset on local system. 
+`dp` path to PASCAL dataset on your local system. 
 
-`category` indicates the class in Pascal dataset
+`category` indicates the class in Pascal dataset, you can choose from 
 
-`window-size` sets the window size of the program (default 1600,800). If window is too large, try 800,600
+`'aeroplane', 'bicycle', 'bird', 'boat','bottle', 'bus', 'car', 'cat', 'chair','cow', 'diningtable', 'dog', 'horse','motorbike', 'person', 'pottedplant','sheep', 'sofa', 'train', 'tvmonitor', 'test'`
+
+`window-size` sets the window size of the program (default 1200,900). If the window is too large, try 800,600
 
 e.g.
 
@@ -43,12 +45,12 @@ python3 -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension,
 
 `assistance-tool` sets the assistance tool for size estimation experiments. You can choose from `grid` or `absbox`
 
-- grid: 20 boxes, each signifies 5% of the volume
 - absbox: boxes of absolute size, size of each box is the same across the dataset. 
+- grid: 20 boxes, each signifies 5% of the volume
 
 e.g.
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog --assistance-tool absbox # default is grid
+python3 -m xvolume -dp .../VOC2012/ -c dog --assistance-tool grid # default is absbox
 ```
 
 `unit` sets the input unit (percent or boxes). When using absbox as assistance tool, only unit `boxes` is available
@@ -64,20 +66,25 @@ python3 -m xvolume --help
 ```
 
 ### Test the tool is working 
-It's highly recommend you check the tool has been set up properly (intermediate and final experimental results are saved) before running the whole experiment (whole experiment may take hours to finish)
+Highly recommend you check the tool has been set up properly (intermediate and final experimental results are saved) before running the whole experiment (whole experiment may take hours to finish)
 
 Run the following command (multiple times). It provides a short experiment: 10 training images + 5 real experiment images
 ```bash
 python3 -m xvolume -dp .../VOC2012/  -c test
 ```
 
-Here is a checklist you can use to verify if the tool is working properly:
+Here is a checklist you can use to verify the tool is working properly:
 
-- [ ] After you finished the short experiment, you can see experimental results stored in a csv file (Default is responses.csv. Use option --result-file to set other names)
-- [ ] If you quit in the middle, you can see a json file named `saved_state.json` storing intermediate results
-- [ ] If you resume the experiment, when the experiment is done, you can see experimental results stored in a csv file. 
+- [ ] After you finished the short experiment, you can see experimental results stored in a csv file in `results` folder (Default is responses.csv. Use option `--result-file` or `-f` to set the file name)
+- [ ] If you quit in the middle, you can see a json file named `<class>_saved_state.json` in the `states` folder storing intermediate results
+- [ ] If you resume and finish the experiment, you can see experimental results stored in a csv file in `results` folder. 
 
 ### How to use the tool
 After running the above command in your terminal, a window will pop up and display the instructions. Press `Enter` key on your keyboard to continue. For training phase, you can skip by pressing `Esc` key on your keyboard when you see a training image. It shows another instructions for the real experiment.
-Press `Enter` key to run the experiment. You can only enter positive integers from 0 to 100. After you enter the number, press `Enter` to jump to the next image. When you want to have a break, press `Esc` to quit the experiment. Next time you can resume from where you end by pressing `y` when it asks whether you 
-want to resume your previous unfinished experiment. Otherwise press `n`.
+Press `Enter` key to run the experiment. You can only enter positive numbers. After you put the number, press `Enter` to jump to the next image. When you want to have a break, press `Esc` to quit the experiment. Next time you can resume from where you end by pressing `y` when it asks whether you 
+want to resume your previous unfinished experiment. Otherwise, press `n`.
+
+### Experimental results
+It's highly recommended that you define the name of experimental result file with option `-f <your result file name>` when you run the experiment.
+The default result file name is `responses`. If you use the same name and run the experiment twice, the first file will be **overwritten and deleted**.
+Result files are saved in the `results` folder. Intermediate results are saved in a json file in the `states` folder.  
