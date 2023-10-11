@@ -3,6 +3,7 @@ import math
 import re
 
 from psychopy import visual, event
+import pandas as pd
 
 
 def get_args():
@@ -173,4 +174,81 @@ def compute_size(response: str, tool: str, unit: str, image_width: float, image_
             size = num_boxes * 5
         else:
             size = float(response)
-    return str(round(size, 1))
+    return str(round(size, 2))
+
+
+def training_experimental_results_statistics(estimates, gts):
+    """
+    This function computes the statistics of the experimental results
+    :param estimates: user responses of the size estimation
+    :param gts: ground truth sizes
+    :return: average relative error
+    """
+    assert len(estimates) == len(gts), "length of responses list and ground truth sizes list should be the same"
+    n = len(gts)
+    sum = 0
+    for estimate, gt in zip(estimates, gts):
+        print(abs(gt - estimate) / gt)
+        sum += abs(gt - estimate) / gt
+    avg = sum / n
+    return avg
+
+
+def display_training_statistics(window, avg):
+    """
+    This function used to display the experimental results statistics of the training dataset
+    :param window:
+    :param avg: average relative error computed from method: training_experimental_results_statistics
+    """
+    # Display a prompt above the image
+    instruction = f"Your average relative error is {avg * 100:.2f}% \n\n press 'Enter' to continue"
+    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=window.size[0] // 40, wrapWidth=window.size[0] / 1.6, color='white')
+
+    # Draw the prompt
+    while True:
+        prompt.draw()
+        window.flip()
+        keys = event.getKeys()
+        if 'return' in keys:
+            break
+
+
+def experimental_results_statistics(responses):
+    """
+    This function is used to compute the experimental results statistics of the real dataset
+    :param responses: list of tuple. elements of each tuple are image name, estimated size, gt size, and time spent on the current image
+    :return: average relative error, total time spend on estimation
+    """
+    n = len(responses)
+    total_time = 0
+    sum_error = 0
+    for response in responses:
+        estimate = float(response[1])
+        gt = float(response[2])
+        time = float(response[3])
+        sum_error += abs(gt - estimate) / gt
+        total_time += time
+    avg_error = sum_error / n
+    return avg_error, total_time
+
+
+def display_final_statistics(window, avg, total_time):
+    """
+    This function used to display the experimental results statistics of the training dataset
+    :param window:
+    :param avg: average relative error computed from method: experimental_results_statistics
+    :param total_time: total time spend on the experiment
+    """
+    # Display a prompt above the image
+    instruction = f"Your average relative error is {avg * 100:.2f}%, Your total time spend on the experiment is {total_time:.2f}s \n\n press 'Enter' to continue"
+    prompt = visual.TextStim(win=window, text=instruction, pos=(0, 0), height=window.size[0] // 40, wrapWidth=window.size[0] / 1.6, color='white')
+
+    # Draw the prompt
+    while True:
+        prompt.draw()
+        window.flip()
+        keys = event.getKeys()
+        if 'return' in keys:
+            break
+
+
