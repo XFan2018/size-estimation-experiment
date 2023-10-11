@@ -16,7 +16,7 @@ dataset can be download from [here](https://uofwaterloo-my.sharepoint.com/:f:/r/
 git clone https://github.com/XFan2018/size-estimation-experiment.git
 cd size-estimation-experiment
 pip install -r requirements.txt
-python3 -m xvolume -dp <your dataset path (to VOC2012 folder)> -c dog  # run dog class
+python -m xvolume -dp <your dataset path (to VOC2012 folder)> -c dog  # run dog class
 ```
 
 options:
@@ -32,14 +32,14 @@ options:
 e.g.
 
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog --window-size 800,600
+python -m xvolume -dp .../VOC2012/ -c dog --window-size 800,600
 ```
 
 `result-file` sets the file name of the experimental results (default is `responses`)
 
 e.g.
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension, '.csv' will be appended to the file name
+python -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension, '.csv' will be appended to the file name
 ```
 
 
@@ -50,19 +50,19 @@ python3 -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension,
 
 e.g.
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog --assistance-tool grid # default is absbox
+python -m xvolume -dp .../VOC2012/ -c dog --assistance-tool grid # default is absbox
 ```
 
 `unit` sets the input unit (percent or boxes). When using absbox as assistance tool, only unit `boxes` is available
 
 e.g.
 ```bash
-python3 -m xvolume -dp .../VOC2012/ -c dog --unit percent  # default is boxes
+python -m xvolume -dp .../VOC2012/ -c dog --unit percent  # default is boxes
 ```
 
 You can also check descriptions of options with help command
 ```bash
-python3 -m xvolume --help
+python -m xvolume --help
 ```
 
 ### Test the tool is working 
@@ -70,7 +70,7 @@ Highly recommend you check the tool has been set up properly (intermediate and f
 
 Run the following command (multiple times). It provides a short experiment: 10 training images + 5 real experiment images
 ```bash
-python3 -m xvolume -dp .../VOC2012/  -c test
+python -m xvolume -dp .../VOC2012/  -c test
 ```
 
 Here is a checklist you can use to verify the tool is working properly:

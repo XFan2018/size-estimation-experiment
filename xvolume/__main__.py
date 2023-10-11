@@ -24,7 +24,7 @@ def main():
         assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
 
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
-
+    assistance_tool = AssistanceTool(args.assistance_tool, mywin)
     # Specify your image directory
     base_dir = args.dataset_path
     image_dir = os.path.join(base_dir, "JPEGImages" + os.sep)
@@ -59,6 +59,8 @@ def main():
     training_responses = []
     training_gts = []
     for i in range(NUM_TRAINING_IMAGES):
+        scale = Scale.SMALL
+
         ob_training_img_file = ob_training_image_files[i]
         ob_training_gt_file = ob_training_gt_files[i]
 
@@ -85,7 +87,8 @@ def main():
 
         # Create a visual stimulus for the image
         stimulus = visual.ImageStim(win=mywin, image=ob_training_img_file, size=(new_width, new_height))
-        show_gt_text = False
+        user_input_done = False
+
         ground_truth_text = ""
         keys = []
         while True:  # Keep looping until they press 'enter'
@@ -94,31 +97,39 @@ def main():
                 skip = True
                 break
 
+            if not user_input_done:
+                if 'up' in keys:
+                    scale = Scale.LARGE
+
+                if 'down' in keys:
+                    scale = Scale.SMALL
+
             if 'return' in keys:
                 if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0],
-                               stimulus.size[1]):  # Check if the response is a float between 0 and 100
+                               stimulus.size[1], scale):  # Check if the response is a float between 0 and 100
                     # Display the ground truth size of the image
-                    if not show_gt_text:
-                        show_gt_text = True
+                    if not user_input_done:
+                        user_input_done = True
 
                         # Add response to the training_responses
                         size = compute_size(response,
                                             tool=args.assistance_tool,
                                             unit=args.unit,
                                             image_width=stimulus.size[0],
-                                            image_height=stimulus.size[1])
+                                            image_height=stimulus.size[1],
+                                            scale=scale)
                         training_responses.append(float(size))
 
                         # set ground truth text
                         ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, (-img_width) / 1.6), height=img_width // 30)
-                        ground_truth_text.setText(ground_truth_image_size(gt, args.assistance_tool, args.unit, stimulus.size[0], stimulus.size[1]))
+                        ground_truth_text.setText(ground_truth_image_size(gt, args.assistance_tool, args.unit, stimulus.size[0], stimulus.size[1], scale))
                         keys.pop()
                     else:
                         break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]))
+                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -126,7 +137,7 @@ def main():
             elif 'backspace' in keys:
                 response = response[:-1]  # Remove the last character
             elif len(keys) > 0:
-                if not show_gt_text:  # if the ground truth size is not shown, add keys to the response
+                if not user_input_done and is_digit_or_dot(keys[0]):  # if the ground truth size is not shown, add keys to the response
                     if keys[0] == "period":
                         response += '.'
                     else:
@@ -137,9 +148,9 @@ def main():
             stimulus.draw()
             input_text.draw()
             num_img_text.draw()
-            if show_gt_text:
+            if user_input_done:
                 ground_truth_text.draw()
-            assistance_tool(mywin, stimulus, args.assistance_tool)
+            assistance_tool(stimulus, scale)
             mywin.flip()
 
         if skip:
@@ -184,6 +195,7 @@ def main():
     experiment_timer.addTime(saved_elapsed_time)  # Adjust the timer by adding the saved elapsed time
 
     for i in range(start_index, n):
+        scale = Scale.SMALL
         start_time = experiment_timer.getTime()
         image_file = image_files[i]
         gt_file = gt_files[i]
@@ -226,20 +238,26 @@ def main():
                 mywin.close()
                 core.quit()
 
+            if 'up' in keys:
+                scale = Scale.LARGE
+
+            if 'down' in keys:
+                scale = Scale.SMALL
+
             if 'return' in keys:
-                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]):
+                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale):
                     break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
                     prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1]))
+                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
 
             elif 'backspace' in keys:
                 response = response[:-1]  # Remove the last character
-            elif len(keys) > 0:
+            elif len(keys) > 0 and is_digit_or_dot(keys[0]):
                 if keys[0] == "period":
                     response += '.'
                 else:
@@ -251,14 +269,15 @@ def main():
             time_display.draw()
             input_text.draw()
             num_img_text.draw()
-            assistance_tool(mywin, stimulus, args.assistance_tool)
+            assistance_tool(stimulus, scale)
             mywin.flip()
 
         size = compute_size(response,
                             tool=args.assistance_tool,
                             unit=args.unit,
                             image_width=stimulus.size[0],
-                            image_height=stimulus.size[1])
+                            image_height=stimulus.size[1],
+                            scale=scale)
         end_time = experiment_timer.getTime()
         time = end_time - start_time
         responses.append((image_file.split(os.sep)[-1], size, f"{gt:.2f}", f"{time:.1f}"))
