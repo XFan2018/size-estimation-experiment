@@ -1,39 +1,40 @@
-import argparse
 import csv
 import json
 import os
-from .class_mapping import Index
-import numpy as np
-from PIL import Image
+
 from psychopy import core
 
+from .class_mapping import Index
 from .instructions import *
 from .utils import *
-from .constants import *
 
 
 def main():
     args = get_args()
-    class_index = Index.get_index(args.category)
-    img_width = int(args.window_size.split(",")[0]) // 2
 
-    # Setup the Window
+    class_index = Index.get_index(args.category)
+
+    window_width = int(args.window_size.split(",")[0])
+
+    # Set up the Window
     assert "," in args.window_size and len(args.window_size.split(",")) == 2 and all([s.isdigit() for s in args.window_size.split(",")]), \
         "window size argument must be two positive integers separated by ',' representing the display window size."
-    if args.assistance_tool == "absbox":
-        assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
-
+    if args.assistance_tool == "absbox": assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
+
+    # initialize assistance tool
     assistance_tool = AssistanceTool(args.assistance_tool, mywin)
+
     # Specify your image directory
     base_dir = args.dataset_path
     image_dir = os.path.join(base_dir, "JPEGImages" + os.sep)
     gt_dir = os.path.join(base_dir, "SegmentationClassAug" + os.sep)
-    cat_file = os.path.join(__package__, "data", F"{args.category}.txt")
+
+    category_file = os.path.join(__package__, "data", F"{args.category}.txt")
     image_files = []
     gt_files = []
 
-    with open(cat_file, 'r') as f:
+    with open(category_file, 'r') as f:
         for line in f.readlines():
             file = line.strip()
             image_files.append(os.path.join(image_dir, file + ".jpg"))
@@ -52,7 +53,7 @@ def main():
             ob_training_gt_files.append(ob_training_gt_file)
 
     # show training instructions
-    display_instructions(mywin, training_instruction(args.category))
+    DisplayTool.display_instructions(mywin, training_instruction(args.category))
 
     # run training experiments
     skip = False
@@ -66,6 +67,9 @@ def main():
 
         with Image.open(ob_training_img_file) as img:
             original_width, original_height = img.size
+            image_stimulus, new_width, new_height = ImageTool.resize_image(original_width, original_height, window_width, img)
+            if args.assistance_tool == 'absbox':
+                image_stimulus = ImageTool.pad_image(window_width, image_stimulus)
 
         with Image.open(ob_training_gt_file) as gt:
             gt_ndarr = np.array(gt)
@@ -73,20 +77,15 @@ def main():
             training_gts.append(float(gt))
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-img_width) // 2), height=img_width // 20)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-window_width) // INPUT_TEXT_POSITION), height=window_width // IMAGE_FONT)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, img_width // 2), height=img_width // 20)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, window_width // INPUT_TEXT_POSITION), height=window_width // IMAGE_FONT)
 
         response = ''
 
-        # Compute new dimensions while maintaining aspect ratio
-        new_width = img_width
-        aspect_ratio = original_width / original_height
-        new_height = new_width / aspect_ratio
-
         # Create a visual stimulus for the image
-        stimulus = visual.ImageStim(win=mywin, image=ob_training_img_file, size=(new_width, new_height))
+        stimulus = visual.ImageStim(win=mywin, image=image_stimulus, size=image_stimulus.size)
         user_input_done = False
 
         ground_truth_text = ""
@@ -105,31 +104,34 @@ def main():
                     scale = Scale.SMALL
 
             if 'return' in keys:
-                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0],
-                               stimulus.size[1], scale):  # Check if the response is a float between 0 and 100
+                if VerificationTool.valid_input(response, args.unit, args.assistance_tool, new_width, new_height, scale,
+                                                window_width):  # Check if the response is a float between 0 and 100
                     # Display the ground truth size of the image
                     if not user_input_done:
                         user_input_done = True
 
                         # Add response to the training_responses
-                        size = compute_size(response,
-                                            tool=args.assistance_tool,
-                                            unit=args.unit,
-                                            image_width=stimulus.size[0],
-                                            image_height=stimulus.size[1],
-                                            scale=scale)
+                        size = ComputeTool.compute_size(response,
+                                                        tool=args.assistance_tool,
+                                                        unit=args.unit,
+                                                        image_width=new_width,
+                                                        image_height=new_height,
+                                                        scale=scale,
+                                                        window_width=window_width)
                         training_responses.append(float(size))
 
                         # set ground truth text
-                        ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, (-img_width) / 1.6), height=img_width // 30)
-                        ground_truth_text.setText(ground_truth_image_size(gt, args.assistance_tool, args.unit, stimulus.size[0], stimulus.size[1], scale))
+                        ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, (-window_width) / GROUND_TRUTH_TEXT_POSITION),
+                                                            height=window_width // IMAGE_FONT)
+                        ground_truth_text.setText(
+                            ComputeTool.compute_ground_truth_image_size(gt, args.assistance_tool, args.unit, new_width, new_height, scale, window_width))
                         keys.pop()
                     else:
                         break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale))
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=window_width // IMAGE_FONT, color=PROMPT_COLOR)
+                    prompt.setText(VerificationTool.invalid_input_value(args.unit, args.assistance_tool, new_width, new_height, scale, window_width))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
@@ -137,7 +139,7 @@ def main():
             elif 'backspace' in keys:
                 response = response[:-1]  # Remove the last character
             elif len(keys) > 0:
-                if not user_input_done and is_digit_or_dot(keys[0]):  # if the ground truth size is not shown, add keys to the response
+                if not user_input_done and VerificationTool.is_digit_or_dot(keys[0]):  # if the ground truth size is not shown, add keys to the response
                     if keys[0] == "period":
                         response += '.'
                     else:
@@ -157,11 +159,11 @@ def main():
             break
     # show statistics of experimental results
     if not skip:
-        avg = training_experimental_results_statistics(training_responses, training_gts)
-        display_training_statistics(mywin, avg)
+        avg = StatisticsTool.training_experimental_results_statistics(training_responses, training_gts)
+        DisplayTool.display_training_statistics(mywin, avg)
 
     # show size estimation instructions
-    display_instructions(mywin, estimation_instruction(args.category))
+    DisplayTool.display_instructions(mywin, estimation_instruction(args.category))
 
     # Check for saved state
     try:
@@ -171,9 +173,10 @@ def main():
             responses = saved_state['responses']
             saved_elapsed_time = saved_state['elapsed_time']
 
-            load_state = f"You have an unfinished experiment. If you want to continue the unfinished experiment from the #{start_index + 1} image " \
-                         f"please press 'y', otherwise press 'n'."
-            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=img_width // 20, wrapWidth=img_width / 0.8, color=PROMPT_COLOR)
+            load_state = f"You have an UNFINISHED experiment! \n\n 1. Press Y to continue the unfinished experiment from the #{start_index + 1} image. " \
+                         f"\n 2. Press N to start a new experiment and your previous intermediate results may be deleted!"
+            prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=window_width // IMAGE_FONT, wrapWidth=window_width / INSTRUCTION_WIDTH,
+                                     color=PROMPT_COLOR)
             while True:
                 prompt.draw()
                 mywin.flip()
@@ -201,28 +204,26 @@ def main():
         gt_file = gt_files[i]
         with Image.open(image_file) as img:
             original_width, original_height = img.size
+            image_stimulus, new_width, new_height = ImageTool.resize_image(original_width, original_height, window_width, img)
+            if args.assistance_tool == 'absbox':
+                image_stimulus = ImageTool.pad_image(window_width, image_stimulus)
 
         with Image.open(gt_file) as gt:
             gt_ndarr = np.array(gt)
             gt = (gt_ndarr == class_index).sum() / (original_width * original_height) * 100
 
         # Ask for the observer's estimate after the image is shown
-        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-img_width) // 2), height=img_width // 20)
+        input_text = visual.TextStim(win=mywin, text='', pos=(0, (-window_width) / INPUT_TEXT_POSITION), height=window_width // IMAGE_FONT)
 
         # display the number of image
-        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, img_width // 2), height=img_width // 20)
+        num_img_text = visual.TextStim(win=mywin, text='', pos=(0, window_width / IMAGE_NUMBER_TEXT_POSITION), height=window_width // IMAGE_FONT)
 
         # display the duration of time
-        time_display = visual.TextStim(win=mywin, pos=(0, img_width // 1.6), color=PROMPT_COLOR, height=img_width // 20)
+        time_display = visual.TextStim(win=mywin, pos=(0, window_width / TIME_TEXT_POSITION), color=PROMPT_COLOR, height=window_width // IMAGE_FONT)
         response = ''
 
-        # Compute new dimensions while maintaining aspect ratio
-        new_width = img_width
-        aspect_ratio = original_width / original_height
-        new_height = new_width / aspect_ratio
-
         # Create a visual stimulus for the image
-        stimulus = visual.ImageStim(win=mywin, image=image_file, size=(new_width, new_height))
+        stimulus = visual.ImageStim(win=mywin, image=image_stimulus, size=image_stimulus.size)
 
         while True:  # Keep looping until they press 'enter'
             # keep displaying the elapsed time and listening for the key.
@@ -245,19 +246,19 @@ def main():
                 scale = Scale.SMALL
 
             if 'return' in keys:
-                if valid_input(response, args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale):
+                if VerificationTool.valid_input(response, args.unit, args.assistance_tool, new_width, new_height, scale, window_width):
                     break
                 else:  # If not a valid input, prompt the observer and reset the response
                     response = ''
-                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=img_width // 20, color=PROMPT_COLOR)
-                    prompt.setText(invalid_input_value(args.unit, args.assistance_tool, stimulus.size[0], stimulus.size[1], scale))
+                    prompt = visual.TextStim(win=mywin, pos=(0, 0), height=window_width // IMAGE_FONT, color=PROMPT_COLOR)
+                    prompt.setText(VerificationTool.invalid_input_value(args.unit, args.assistance_tool, new_width, new_height, scale, window_width))
                     prompt.draw()
                     mywin.flip()
                     core.wait(INVALID_INPUT_DISPLAY_TIME)
 
             elif 'backspace' in keys:
                 response = response[:-1]  # Remove the last character
-            elif len(keys) > 0 and is_digit_or_dot(keys[0]):
+            elif len(keys) > 0 and VerificationTool.is_digit_or_dot(keys[0]):
                 if keys[0] == "period":
                     response += '.'
                 else:
@@ -272,12 +273,13 @@ def main():
             assistance_tool(stimulus, scale)
             mywin.flip()
 
-        size = compute_size(response,
-                            tool=args.assistance_tool,
-                            unit=args.unit,
-                            image_width=stimulus.size[0],
-                            image_height=stimulus.size[1],
-                            scale=scale)
+        size = ComputeTool.compute_size(response,
+                                        tool=args.assistance_tool,
+                                        unit=args.unit,
+                                        image_width=new_width,
+                                        image_height=new_height,
+                                        scale=scale,
+                                        window_width=window_width)
         end_time = experiment_timer.getTime()
         time = end_time - start_time
         responses.append((image_file.split(os.sep)[-1], size, f"{gt:.2f}", f"{time:.1f}"))
@@ -288,8 +290,8 @@ def main():
         for row in responses:
             writer.writerow(row)
 
-    avg_error, total_time = experimental_results_statistics(responses)
-    display_final_statistics(mywin, avg_error, total_time)
+    avg_error, total_time = StatisticsTool.experimental_results_statistics(responses)
+    DisplayTool.display_final_statistics(mywin, avg_error, total_time)
     mywin.close()
 
 
