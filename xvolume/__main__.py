@@ -166,10 +166,11 @@ def main():
     DisplayTool.display_instructions(mywin, estimation_instruction(args.category))
 
     # Check for saved state
+    double_confirm = False
     try:
         with open(os.path.join("states", f'{args.category}_saved_state.json'), 'r') as f:
             saved_state = json.load(f)
-            start_index = saved_state['current_index']
+            start_index = saved_state['current_index'] + 1
             responses = saved_state['responses']
             saved_elapsed_time = saved_state['elapsed_time']
 
@@ -184,10 +185,17 @@ def main():
                 if 'y' in keys:
                     break
                 if 'n' in keys:
-                    start_index = 0
-                    responses = []
-                    saved_elapsed_time = 0
-                    break
+                    if not double_confirm:
+                        load_state = f"Are you sure you DON'T want to resume your UNFINISHED experiment? Your intermediate results will be deleted! Press Y to resume UNFINISHED experiment. Press N to delete intermediate results and start a new experiment."
+                        prompt = visual.TextStim(win=mywin, text=load_state, pos=(0, 0), height=window_width // IMAGE_FONT,
+                                                 wrapWidth=window_width / INSTRUCTION_WIDTH,
+                                                 color=PROMPT_COLOR)
+                        double_confirm = True
+                    else:
+                        start_index = 0
+                        responses = []
+                        saved_elapsed_time = 0
+                        break
     except FileNotFoundError:
         start_index = 0
         responses = []
@@ -202,11 +210,17 @@ def main():
         start_time = experiment_timer.getTime()
         image_file = image_files[i]
         gt_file = gt_files[i]
-        with Image.open(image_file) as img:
-            original_width, original_height = img.size
-            image_stimulus, new_width, new_height = ImageTool.resize_image(original_width, original_height, window_width, img)
-            if args.assistance_tool == 'absbox':
-                image_stimulus = ImageTool.pad_image(window_width, image_stimulus)
+        try:
+            with Image.open(image_file) as img:
+                original_width, original_height = img.size
+                image_stimulus, new_width, new_height = ImageTool.resize_image(original_width, original_height, window_width, img)
+                if args.assistance_tool == 'absbox':
+                    image_stimulus = ImageTool.pad_image(window_width, image_stimulus)
+        except FileNotFoundError:
+            image_path = os.sep.join(image_file.split(os.sep)[-3:])
+            DisplayTool.display_file_not_found(mywin, image_path)
+        except Exception as e:
+            print(e)
 
         with Image.open(gt_file) as gt:
             gt_ndarr = np.array(gt)
@@ -233,9 +247,6 @@ def main():
             keys = event.getKeys()
             if 'escape' in keys:
                 # Save the state
-                with open(os.path.join("states", f'{args.category}_saved_state.json'), 'w') as f:
-                    elapsed_time = experiment_timer.getTime()
-                    json.dump({'current_index': i, 'responses': responses, 'elapsed_time': elapsed_time}, f)
                 mywin.close()
                 core.quit()
 
@@ -283,6 +294,9 @@ def main():
         end_time = experiment_timer.getTime()
         time = end_time - start_time
         responses.append((image_file.split(os.sep)[-1], size, f"{gt:.2f}", f"{time:.1f}"))
+        with open(os.path.join("states", f'{args.category}_saved_state.json'), 'w') as f:
+            elapsed_time = experiment_timer.getTime()
+            json.dump({'current_index': i, 'responses': responses, 'elapsed_time': elapsed_time}, f)
 
     with open(os.path.join("results", args.result_file) + ".csv", 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)

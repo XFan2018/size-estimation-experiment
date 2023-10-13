@@ -293,6 +293,20 @@ class DisplayTool:
             if 'return' in keys:
                 break
 
+    @staticmethod
+    def display_file_not_found(window, filename):
+        exception = f"{filename} file is not found in your directory. Press ENTER to quit the experiment."
+        # Display a prompt above the image
+        prompt = visual.TextStim(win=window, text=exception, pos=(0, 0), height=window.size[0] // 45, wrapWidth=window.size[0] / 1.5, color=PROMPT_COLOR)
+
+        # Draw the prompt
+        while True:
+            prompt.draw()
+            window.flip()
+            keys = event.getKeys()
+            if 'return' in keys:
+                break
+
 class StatisticsTool:
     @staticmethod
     def training_experimental_results_statistics(estimates, gts):
