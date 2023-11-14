@@ -23,8 +23,10 @@ def get_args():
     parser.add_argument("--result-file", '-f', type=str, help="file name to store the experimental results", default="responses")
     parser.add_argument("--assistance-tool", '-at', type=str, help="The type of assistance tool to use. Choose from grid, and box with absolute size",
                         default="absbox",
-                        choices=["grid", "absbox"])
+                        choices=["grid", "absbox", "none"])
     args = parser.parse_args()
+    if args.assistance_tool == "absbox": assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
+    if args.assistance_tool == "none": args.unit = "percent"
     return args
 
 
@@ -42,6 +44,8 @@ class AssistanceTool:
             self.assistance_tool = self.assistance_tool_grid
         elif tool == "absbox":
             self.assistance_tool = self.assistance_tool_abs_boxes
+        elif tool == "none":
+            self.assistance_tool = self.assistance_tool_none
         else:
             raise NotImplementedError
 
@@ -123,6 +127,9 @@ class AssistanceTool:
             line.draw()
             x_pos += box_size
 
+    def assistance_tool_none(self, stimulus, scale):
+        pass
+
     def __call__(self, stimulus, scale):
         self.assistance_tool(stimulus, scale)
 
@@ -160,6 +167,8 @@ class ComputeTool:
                 size = num_boxes * percent_per_box
             else:
                 size = float(response)
+        elif tool == "none":
+            size = float(response)
         else:
             raise NotImplementedError
         return str(round(size, 2))
@@ -205,11 +214,14 @@ class VerificationTool:
             box_size = window_width / image_width_over_box_length
             box_area = box_size ** 2
             return 0 <= num <= (image_width * image_height / box_area)
-        else:
+        elif tool == "grid":
             if unit == "boxes":
                 return 0 <= num <= number_of_patches
             else:
                 return 0 <= num <= 100
+        else:
+            return 0 <= num <= 100
+
 
     @staticmethod
     def invalid_input_value(unit, tool, image_width, image_height, scale, window_width):

@@ -19,7 +19,7 @@ def main():
     # Set up the Window
     assert "," in args.window_size and len(args.window_size.split(",")) == 2 and all([s.isdigit() for s in args.window_size.split(",")]), \
         "window size argument must be two positive integers separated by ',' representing the display window size."
-    if args.assistance_tool == "absbox": assert args.unit == "boxes", "Input unit should be boxes if the assistance tool is absolute boxes"
+
     mywin = visual.Window(list(map(int, args.window_size.split(","))), monitor="testMonitor", units="pix")
 
     # initialize assistance tool

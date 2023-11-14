@@ -47,6 +47,7 @@ python -m xvolume -dp .../VOC2012/ -c dog --result-file output  # no extension, 
 
 - absbox: boxes of absolute size, size of each box is the same across the dataset. 
 - grid: 20 boxes, each signifies 5% of the volume
+- none: no assistance tool is applied, the unit will be set to `percent` automatically
 
 e.g.
 ```bash
