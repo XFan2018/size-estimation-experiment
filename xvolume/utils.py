@@ -403,6 +403,14 @@ class ImageTool:
         padded_image = Image.fromarray(padded_image_arr, "RGB")
         return padded_image
 
+palette = [0, 0, 0, 128, 0, 0, 0, 128, 0, 128, 128, 0, 0, 0, 128, 128, 0, 128, 0, 128, 128,
+           128, 128, 128, 64, 0, 0, 192, 0, 0, 64, 128, 0, 192, 128, 0, 64, 0, 128, 192, 0, 128,
+           64, 128, 128, 192, 128, 128, 0, 64, 0, 128, 64, 0, 0, 192, 0, 128, 192, 0, 0, 64, 128]
+
+def colorize_mask(mask):
+    new_mask = Image.fromarray(mask.astype(np.uint8)).convert('P')
+    new_mask.putpalette(palette)
+    return new_mask
 
 
 

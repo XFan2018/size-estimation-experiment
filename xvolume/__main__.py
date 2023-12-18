@@ -74,6 +74,15 @@ def main():
         with Image.open(ob_training_gt_file) as gt:
             gt_ndarr = np.array(gt)
             gt = (gt_ndarr == class_index).sum() / (original_width * original_height) * 100
+
+            gt_ndarr[gt_ndarr != class_index] = 0
+            mask = colorize_mask(gt_ndarr)
+            mask = mask.convert("RGB")
+            img = Image.open(ob_training_img_file)
+            img_mask = Image.blend(img, mask, alpha=0.8)
+            img_mask_stimulus, new_width, new_height = ImageTool.resize_image(original_width, original_height, window_width, img_mask)
+            if args.assistance_tool == 'absbox':
+                img_mask_stimulus = ImageTool.pad_image(window_width, img_mask_stimulus)
             training_gts.append(float(gt))
 
         # Ask for the observer's estimate after the image is shown
@@ -123,8 +132,10 @@ def main():
                         # set ground truth text
                         ground_truth_text = visual.TextStim(win=mywin, text='', pos=(0, (-window_width) / GROUND_TRUTH_TEXT_POSITION),
                                                             height=window_width // IMAGE_FONT)
-                        ground_truth_text.setText(
-                            ComputeTool.compute_ground_truth_image_size(gt, args.assistance_tool, args.unit, new_width, new_height, scale, window_width))
+                        ground_truth_text.setText(ComputeTool.compute_ground_truth_image_size(gt, args.assistance_tool, args.unit, new_width, new_height, scale, window_width))
+
+                        # set visual stimulus to the blend of image and mask
+                        stimulus = visual.ImageStim(win=mywin, image=img_mask_stimulus, size=img_mask_stimulus.size)
                         keys.pop()
                     else:
                         break
