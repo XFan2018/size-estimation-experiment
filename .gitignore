@@ -3,3 +3,6 @@
 __pycache__
 *.csv
 *.json
+*.svg
+*.pdf
+*.zip
